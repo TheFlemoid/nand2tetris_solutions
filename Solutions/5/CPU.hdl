@@ -32,5 +32,60 @@ CHIP CPU {
         pc[15];          // address of next instruction
 
     PARTS:
-	//// Replace this comment with your code.
+    // Pre decode
+    And(a=instruction[15], b=true, out=isCInstruction);
+    Not(in=isCInstruction, out=isAInstruction);
+    And(a=isCInstruction, b=instruction[5], out=isCWriteA);
+
+    Or(a=isAInstruction, b=isCWriteA, out=loadA);
+    And(a=isCInstruction, b=instruction[4], out=loadD);
+
+    Mux16(a=instruction, b=aluOut, sel=isCWriteA, out=inAReg);
+
+    // Registers
+    ARegister(in=inAReg, load=loadA, out=aRegOut, out[0..14]=addressM);
+    DRegister(in=aluOut, load=loadD, out=dRegOut);
+
+    // Logic IRT loading A reg value or memory pointer to ALU
+    Mux16(a=aRegOut, b=inM, sel=instruction[12], out=outAOrM);
+
+    // ALU
+    ALU(x=dRegOut, 
+        y=outAOrM, 
+        zx=instruction[11], 
+        nx=instruction[10], 
+        zy=instruction[9], 
+        ny=instruction[8], 
+        f=instruction[7], 
+        no=instruction[6], 
+        out=aluOut,
+        out=outM, 
+        zr=isZeroOut, 
+        ng=isNegOut);
+
+    // Out flags and PC
+    Not(in=isNegOut, out=isNonNeg);
+    Not(in=isZeroOut, out=isNonZero);
+    And(a=isNonNeg, b=isNonZero, out=isPositive);
+
+    // Write M
+    And(a=isCInstruction, b=instruction[3], out=writeM);
+
+    // JGT
+    And(a=isPositive, b=instruction[0], out=JGT);
+
+    // JEQ
+    And(a=isZeroOut, b=instruction[1], out=JEQ);
+    
+    // JLT
+    And(a=isNegOut, b=instruction[2], out=JLT);
+
+
+    // Combined PC load
+    Or(a=JGT, b=JEQ, out=jmpOrStep1);
+    Or(a=jmpOrStep1, b=JLT, out=jmpFlagComb);
+    And(a=jmpFlagComb, b=isCInstruction, out=pcLoad);
+
+    // PC logic
+    PC(in=aRegOut, inc=true, load=pcLoad, reset=reset, out[0..14]=pc);
 }
