@@ -1,0 +1,19 @@
+plugins {
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+}
+
+java {
+    toolchain {
+    }
+}
+
+application {
+    mainClass = 'com.tdberg.tetris.Main'
+}
