@@ -1,4 +1,4 @@
-package com.tdberg.tetris.enums;
+package com.tdberg.tetris.assembler.enums;
 
 /**
  * Enum detailing the various instruction types that can occur in Hack

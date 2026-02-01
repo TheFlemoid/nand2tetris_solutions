@@ -1,8 +1,11 @@
-package com.tdberg.tetris.enums;
+package com.tdberg.tetris.assembler.enums;
 
 /**
  * Enum detailing the various compute types that can occur 
  * in Hack assembly.
+ * NOTE: This enum INCLUDES the value of the a bit within the
+ *       C-Instruction, as well as all 6 c bits, so seven
+ *       bits total.
  */
 public enum CompType {
     ZERO        ("0101010", "0"),

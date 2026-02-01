@@ -15,5 +15,5 @@ java {
 }
 
 application {
-    mainClass = 'com.tdberg.tetris.Main'
+    mainClass = 'com.tdberg.tetris.assembler.Main'
 }
