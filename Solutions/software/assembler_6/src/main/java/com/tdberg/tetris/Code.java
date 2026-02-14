@@ -13,6 +13,7 @@ public class Code {
     private Parser parser;
     private String outputFilePath;
     Path outputFile;
+    long instructionLine = 0;
 
     private static StringBuilder instBuilder = new StringBuilder();
     private static String C_INST_PREFIX="111";
@@ -77,6 +78,10 @@ public class Code {
 
             writeInstruction(instBuilder.toString());
         }
+    }
+
+    public void populateSymbolTable() {
+
     }
 
     /**

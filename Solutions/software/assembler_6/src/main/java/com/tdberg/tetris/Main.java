@@ -49,9 +49,10 @@ public class Main {
         }
         String outputFilePath = outputPathBuilder.toString();
 
-        Parser parser = new Parser(inputFilePath);
-        Code assembler = new Code(parser, outputFilePath);
-        assembler.assemble();
+        SymbolTable symbolTable = new SymbolTable();
+        Parser parser = new Parser(inputFilePath, symbolTable);
+        //Code assembler = new Code(parser, outputFilePath);
+        //assembler.assemble();
     }
 
     /**

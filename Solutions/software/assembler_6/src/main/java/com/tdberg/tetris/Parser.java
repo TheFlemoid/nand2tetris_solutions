@@ -26,6 +26,7 @@ public class Parser {
     private RandomAccessFile sourceFile;
     private InstructionType currentInstructionType;
     private String currentInstruction;
+    private SymbolTable symbolTable;
 
     private static final String lRegex = "(?<!\\/\\/\s?)\\(.*\\)";
     private static final String aRegex = "(?<!\\/\\/\s?)@[0-9a-zA-Z_$:.]*[^\s]";
@@ -37,9 +38,11 @@ public class Parser {
      * Default constructor
      *
      * @param hackFilePath path to the input Hack assembly program
+     * @param symbolTable SymbolTable to use for memory mapping
      */
-    public Parser(final String hackFilepath) {
+    public Parser(final String hackFilepath, final SymbolTable symbolTable) {
         this.filepath = hackFilepath;
+        this.symbolTable = symbolTable;
 
         try {
             sourceFile = new RandomAccessFile(filepath, "r");
@@ -49,6 +52,9 @@ public class Parser {
                               "\n\nExiting.\n", filepath, e.getMessage());
             System.exit(1);
         }
+
+        addLabelsToSymbolTable();
+        symbolTable.printSymbolTable();
     }
 
     /**
@@ -94,6 +100,7 @@ public class Parser {
         try {
             sourceFile.seek(currentFp);
             currentInstruction = sourceFile.readLine();
+            currentInstruction = currentInstruction.replaceAll("\\s", "");
             currentInstructionType = getInstructionType();
             currentFp = sourceFile.getFilePointer();
         }catch (EOFException e) {
@@ -127,6 +134,47 @@ public class Parser {
     }
 
     /**
+     * Walks through the entire program, filling out the symbol table with the
+     * instruction line number of each L-instruction (ie. (LOOP)).
+     */
+    private void addLabelsToSymbolTable() {
+        int currentLine = 0;
+
+        while(hasMoreInstructions()) {
+            advance();
+
+            switch(getCurrentInstructionType()) {
+                case A_INSTRUCTION -> {
+                    currentLine++;
+                }
+                case C_INSTRUCTION -> {
+                    currentLine++;
+                }
+                case L_INSTRUCTION -> {
+                    String instString = getSymbol();
+                    if (!symbolTable.contains(instString)) {
+                        symbolTable.addEntry(instString, currentLine);
+                    } else {
+                        System.out.printf("Label (%s) appears in multiple locations." +
+                                          "  This is invalid.\n", instString);
+                        System.exit(1);
+                    }
+                }
+            }
+        }
+
+        // Reset the source file back to the beginning to prep for the actual
+        // assembly pass
+        try {
+            currentFp = 0;
+            sourceFile.seek(currentFp);
+        } catch(IOException e) {
+            System.out.println("IOException when parsing source file.");
+            System.exit(1);
+        }
+    }
+
+    /**
      * Returns the symbol given by the current instruction.
      * NOTE: This should ONLY be called for A or L-instructions, and will 
      *       return gibberish for C-instructions.
@@ -156,7 +204,10 @@ public class Parser {
                 // TODO: Parse variables into symbol table here
             }
         }else if (currentInstructionType == InstructionType.L_INSTRUCTION) {
-                // TODO: Parse symbols into symbol table here
+            // TODO: Parse symbols into symbol table here
+            retVal = currentInstruction.replaceAll("\\s", "");
+            retVal = retVal.replace("(", "");
+            retVal = retVal.replace(")", "");
         }else {
             System.out.printf("getSymbol() called on incorrect instruction type:" + 
                               "%s\nExiting.\n", currentInstructionType.name());
@@ -307,7 +358,9 @@ public class Parser {
      * @param instructionTest String to test
      * @return true if the param String is a valid instruction, false otherwise
      */
-    private boolean isValidInstruction(final String instructionTest) {
+    private boolean isValidInstruction(String instructionTest) {
+
+        instructionTest = instructionTest.replaceAll("\\s", "");
 
         if (instructionTest == null) {
             return false;
