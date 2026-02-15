@@ -3,6 +3,11 @@ package com.tdberg.tetris.assembler;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Symbol table, used to track user defined labels (for jumping) and
+ * variables, mapping those strings to actual memory addresses and
+ * instruction lines.
+ */
 public class SymbolTable {
 
     private static HashMap<String, Integer> symbolMap = new HashMap<>();
@@ -18,12 +23,12 @@ public class SymbolTable {
 
     // Array mapping reserved registers to their predefined symbols
     private static Integer[] RESERVED_REGISTERS = {0,
-                                                1,
-                                                2,
-                                                3,
-                                                4,
-                                                16384,
-                                                24576};
+                                                   1,
+                                                   2,
+                                                   3,
+                                                   4,
+                                                   16384,
+                                                   24576};
 
     /**
      * Default constructor
@@ -90,5 +95,14 @@ public class SymbolTable {
             System.out.printf("%1$" + 35 + "s |", symbol);
             System.out.printf(" %-13d\n", (long)symbolMap.get(symbol));
         }
+    }
+
+    /**
+     * Returns the size of the symbol table.
+     *
+     * @return the size of the symbol table as an integer
+     */
+    public int size() {
+        return symbolMap.size();
     }
 }

@@ -8,4 +8,4 @@ build
 .kotlin
 
 # Ignore assembled hack machine code
-.hack
+*.hack

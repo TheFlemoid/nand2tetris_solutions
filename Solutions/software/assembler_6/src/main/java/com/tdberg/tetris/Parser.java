@@ -26,7 +26,6 @@ public class Parser {
     private RandomAccessFile sourceFile;
     private InstructionType currentInstructionType;
     private String currentInstruction;
-    private SymbolTable symbolTable;
 
     private static final String lRegex = "(?<!\\/\\/\s?)\\(.*\\)";
     private static final String aRegex = "(?<!\\/\\/\s?)@[0-9a-zA-Z_$:.]*[^\s]";
@@ -38,11 +37,9 @@ public class Parser {
      * Default constructor
      *
      * @param hackFilePath path to the input Hack assembly program
-     * @param symbolTable SymbolTable to use for memory mapping
      */
-    public Parser(final String hackFilepath, final SymbolTable symbolTable) {
+    public Parser(final String hackFilepath) {
         this.filepath = hackFilepath;
-        this.symbolTable = symbolTable;
 
         try {
             sourceFile = new RandomAccessFile(filepath, "r");
@@ -52,9 +49,6 @@ public class Parser {
                               "\n\nExiting.\n", filepath, e.getMessage());
             System.exit(1);
         }
-
-        addLabelsToSymbolTable();
-        symbolTable.printSymbolTable();
     }
 
     /**
@@ -134,47 +128,6 @@ public class Parser {
     }
 
     /**
-     * Walks through the entire program, filling out the symbol table with the
-     * instruction line number of each L-instruction (ie. (LOOP)).
-     */
-    private void addLabelsToSymbolTable() {
-        int currentLine = 0;
-
-        while(hasMoreInstructions()) {
-            advance();
-
-            switch(getCurrentInstructionType()) {
-                case A_INSTRUCTION -> {
-                    currentLine++;
-                }
-                case C_INSTRUCTION -> {
-                    currentLine++;
-                }
-                case L_INSTRUCTION -> {
-                    String instString = getSymbol();
-                    if (!symbolTable.contains(instString)) {
-                        symbolTable.addEntry(instString, currentLine);
-                    } else {
-                        System.out.printf("Label (%s) appears in multiple locations." +
-                                          "  This is invalid.\n", instString);
-                        System.exit(1);
-                    }
-                }
-            }
-        }
-
-        // Reset the source file back to the beginning to prep for the actual
-        // assembly pass
-        try {
-            currentFp = 0;
-            sourceFile.seek(currentFp);
-        } catch(IOException e) {
-            System.out.println("IOException when parsing source file.");
-            System.exit(1);
-        }
-    }
-
-    /**
      * Returns the symbol given by the current instruction.
      * NOTE: This should ONLY be called for A or L-instructions, and will 
      *       return gibberish for C-instructions.
@@ -186,25 +139,24 @@ public class Parser {
         
         if (currentInstructionType == InstructionType.A_INSTRUCTION) {
             String symbolString = currentInstruction.replace("@", "");
-            boolean isConstant = false;
-
-            try {
-                Integer testInt = Integer.parseInt(symbolString);
-                isConstant = true;
-
-                String binaryString = String.format("%15s", 
-                        Integer.toBinaryString(testInt));
-                binaryString = binaryString.replace(" ", "0");
-                retVal = binaryString;
-            } catch(NumberFormatException e) {
-                isConstant = false;
-            }
-
-            if (!isConstant) {
-                // TODO: Parse variables into symbol table here
+            boolean isConstant = isSymbolConstant();
+            
+            if (isSymbolConstant()) {
+                try {
+                    Integer constSymbol = Integer.parseInt(symbolString);
+                    String binaryString = String.format("%15s", 
+                               Integer.toBinaryString(constSymbol));
+                    binaryString = binaryString.replace(" ", "0");
+                    retVal = binaryString;
+                } catch(NumberFormatException e) {
+                    System.out.printf("Unexpected exception occured, " + 
+                                      "not sure how we got here.");
+                    System.exit(1);
+                }
+            } else {
+                retVal = symbolString;
             }
         }else if (currentInstructionType == InstructionType.L_INSTRUCTION) {
-            // TODO: Parse symbols into symbol table here
             retVal = currentInstruction.replaceAll("\\s", "");
             retVal = retVal.replace("(", "");
             retVal = retVal.replace(")", "");
@@ -216,6 +168,26 @@ public class Parser {
 
         // TODO: Return symbol as String of binary
         return retVal;
+    }
+
+    /**
+     * Returns true if the symbol in the current instruction is a constant, 
+     * false otherwise.
+     * NOTE: This should ONLY be called for A-instructions.  It will always 
+     * return false if called on a C or L-instruction.
+     */
+    public boolean isSymbolConstant() {
+        if (currentInstructionType == InstructionType.A_INSTRUCTION) {
+            String symbolString = currentInstruction.replace("@", "");
+            try {
+                Integer testInt = Integer.parseInt(symbolString);
+                return true;
+            } catch (NumberFormatException e) {
+                return false;
+            }
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -433,6 +405,19 @@ public class Parser {
         }
 
         return retString;
+    }
+
+    /**
+     * Resets the source file back to the beginning.
+     */
+    public void reset() {
+        try {
+            currentFp = 0;
+            sourceFile.seek(currentFp);
+        } catch(IOException e) {
+            System.out.println("IOException when parsing source file.");
+            System.exit(1);
+        }
     }
 }
 

@@ -50,9 +50,13 @@ public class Main {
         String outputFilePath = outputPathBuilder.toString();
 
         SymbolTable symbolTable = new SymbolTable();
-        Parser parser = new Parser(inputFilePath, symbolTable);
-        //Code assembler = new Code(parser, outputFilePath);
-        //assembler.assemble();
+        Parser parser = new Parser(inputFilePath);
+        Code assembler = new Code(parser, symbolTable, outputFilePath);
+        assembler.assemble();
+
+        //symbolTable.printSymbolTable();
+        //System.out.printf("\n---------------------\n");
+        //System.out.printf("Symbol Table Size: %d\n", symbolTable.size());
     }
 
     /**
