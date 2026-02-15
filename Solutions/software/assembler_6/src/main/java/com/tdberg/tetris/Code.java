@@ -144,10 +144,6 @@ public class Code {
         parser.reset();
     }
 
-    public void populateSymbolTable() {
-
-    }
-
     /**
      * Writes the bytes of the param string to the output .hack file.
      *
