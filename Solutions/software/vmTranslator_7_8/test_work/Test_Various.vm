@@ -1,0 +1,5 @@
+// Testing various stack machine functions
+
+push constant 14
+push constant 7
+push constant 329

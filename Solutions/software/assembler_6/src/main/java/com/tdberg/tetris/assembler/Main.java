@@ -49,6 +49,7 @@ public class Main {
         }
         String outputFilePath = outputPathBuilder.toString();
 
+        // This is where actual assembly happens
         SymbolTable symbolTable = new SymbolTable();
         Parser parser = new Parser(inputFilePath);
         Code assembler = new Code(parser, symbolTable, outputFilePath);

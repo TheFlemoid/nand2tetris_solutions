@@ -32,6 +32,7 @@ public class Parser {
 
     private long sourceFileLength;
     private long currentFp = 0;
+    private int lineCount = 0;
 
     /**
      * Default constructor
@@ -68,6 +69,7 @@ public class Parser {
             try {
                 sourceFile.seek(currentFp);
                 line = sourceFile.readLine();
+                lineCount++;
 
                 if (isValidInstruction(line)) {
                     return true;

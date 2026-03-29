@@ -12,3 +12,4 @@ plugins {
 
 rootProject.name = 'nand2tetris_software'
 include('assembler_6')
+include('vmTranslator_7_8')
